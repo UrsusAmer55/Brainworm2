@@ -137,6 +137,26 @@ boxplot(percent~migrators+cover,data=per3)
 deer<-deerA[deerA$season=="summer",]
 deer$animalID<-as.factor(deer$animalID)
 
+
+#elev_P75_0p15plus_30METERS_UTM15.tif = 75th percentile for canopy height to help decrease influence from super-canopy trees
+canheight<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/elev_P75_0p15plus_30METERS_UTM15.tif")
+plot(canheight)
+#Canopy_Prop3m_UTM.tif = returns above 3-m for % canopy cover
+cancover<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/Canopy_Prop3m_UTM.tif")
+#Prop_1_3m = non-ground returns between 1 and 3 m above ground (proxy for understory cover).
+under<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/Prop_1_3m")
+plot(under)
+
+#habitat - amanda class - NLCD_RCL_AM
+hab<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/NLCD_RCL_AM")
+plot(hab)
+
+
+
+habitat<-stack(canheight,cancover,under,hab)
+str(lidar)
+plot(lidar)
+
 # FITTING A GENERALISED FUNCTIONAL RESPONSE MODEL (see Matthiopoulos et al. 2011)
 # View the columns of the 'habitatDat' data frame
 head(habitatDat)
