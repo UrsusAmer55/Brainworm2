@@ -147,15 +147,44 @@ cancover<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files
 under<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/Prop_1_3m")
 plot(under)
 
+
+lidar<-stack(canheight,cancover,under)
+str(lidar)
+plot(habitat)
+
+
 #habitat - amanda class - NLCD_RCL_AM
 hab<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/NLCD_RCL_AM")
 plot(hab)
 
 
 
-habitat<-stack(canheight,cancover,under,hab)
-str(lidar)
-plot(lidar)
+habC<-crop(hab, under)
+habCpts<-rasterToPoints(habC, fun=NULL, spatial=TRUE)
+habCptsDF<-as.data.frame(habCpts)
+head(habCptsDF)
+table(habCptsDF$NLCD_RCL_AM)
+habCptsDF2<-habCptsDF[habCptsDF$NLCD_RCL_AM!=4,] 
+
+habCpts <- SpatialPointsDataFrame(habCptsDF2[,c("x", "y")], habCptsDF2)
+str(vegRpts2)
+
+system.time(habCptsDF2$lidar<-extract(lidar, habCpts))
+head(habCptsDF2)
+str(habCptsDF2$lidar[2])
+
+ext<-extent(canheight)
+habCE<-setExtent(habC, ext, keepres=TRUE)
+
+str(habCE)
+plot(habCE)
+
+str(habCE@data@attributes)
+habCE2 <- setValues(raster(habCE), habCE[])
+plot(habCE2)
+
+ncol(habCE)
+
 
 # FITTING A GENERALISED FUNCTIONAL RESPONSE MODEL (see Matthiopoulos et al. 2011)
 # View the columns of the 'habitatDat' data frame
