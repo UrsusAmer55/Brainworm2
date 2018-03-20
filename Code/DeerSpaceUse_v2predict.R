@@ -150,7 +150,7 @@ plot(under)
 
 lidar<-stack(canheight,cancover,under)
 str(lidar)
-plot(habitat)
+plot(lidar)
 
 
 #habitat - amanda class - NLCD_RCL_AM
@@ -167,11 +167,28 @@ table(habCptsDF$NLCD_RCL_AM)
 habCptsDF2<-habCptsDF[habCptsDF$NLCD_RCL_AM!=4,] 
 
 habCpts <- SpatialPointsDataFrame(habCptsDF2[,c("x", "y")], habCptsDF2)
-str(vegRpts2)
+str(habCpts)
 
 system.time(habCptsDF2$lidar<-extract(lidar, habCpts))
-head(habCptsDF2)
-str(habCptsDF2$lidar[2])
+str(habCptsDF2)
+summary(habCptsDF2$lidar[,1])
+
+habCptsDF2C<-na.omit(habCptsDF2, cols="lidar[,1]")
+
+#create a raster from the points
+rasttest<-rasterFromXYZ(vegRpts3_SprCrep2)
+plot(rasttest)
+str(rasttest)
+
+#write that raster! (two types here)
+writeRaster(rasttest,"F:/Moose/FPT/DataProc/RSF_Predictions/Spatial/WinNight.grd")
+writeRaster(rasttest,"F:/Moose/FPT/DataProc/RSF_Predictions/Spatial/WinNight.asc")
+
+
+
+
+
+
 
 ext<-extent(canheight)
 habCE<-setExtent(habC, ext, keepres=TRUE)
