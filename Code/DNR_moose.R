@@ -513,12 +513,31 @@ file_list <- list.files()
  print(i)
  }
  
+#Read in all shapefiles individually
+shps <- dir(getwd(), "*.shp")
+shps <- sub('\\.shp$',"", shps)
+for (shp in shps) assign(shp, readOGR('.',layer=shp))
 
-UT<-rbind(X31_2013_Summer.X31_BB90_poly,X58_2013_Summer.X58_BB90_poly)
-plot(UT) 
-plot(UT@)
-plot(UT@polygons[1])
- 
+plot(X178_2015_Summer.X178_BB90_poly,add=TRUE)
+plot(X192_2015_Summer.X192_BB90_poly,add=TRUE)
+
+summerMooseBB90HR<-rbind(X11_2013_Summer.X11_BB90_poly,X13_2013_Summer.X13_BB90_poly,X15_2013_Summer.X15_BB90_poly,  
+             X151_2014_Summer.X151_BB90_poly,X156_2014_Summer.X156_BB90_poly,X157_2016_Summer.X157_BB90_poly,
+             X158_2016_Summer.X158_BB90_poly,X161_2015_Summer.X161_BB90_poly,X178_2014_Summer.X178_BB90_poly,
+             X178_2015_Summer.X178_BB90_poly,X181_2015_Summer.X181_BB90_poly,X181_2016_Summer.X181_BB90_poly,
+             X19_2013_Summer.X19_BB90_poly,X192_2015_Summer.X192_BB90_poly,X200_2015_Summer.X200_BB90_poly,
+             X202_2015_Summer.X202_BB90_poly,X205_2015_Summer.X205_BB90_poly,X31_2013_Summer.X31_BB90_poly,  
+             X58_2013_Summer.X58_BB90_poly)
+plot(summerMooseBB90HR,add=TRUE,col="red")
+head(summerMooseBB90HR)
+str(summerMooseBB90HR)
+
+
+
+
+
+
+
 #this works to convert lines to polygons
 var_temp <- SpatialLines2PolySet(X151_2014_Summer.X151_BB90)
 sp_try <- PolySet2SpatialPolygons(var_temp)

@@ -44,8 +44,48 @@ deerA<-cbind(deerA,Dcoords)
 
 
 head(deerA)
-str(deerA)
+unique(deerA$season)
 
+
+#assign a season
+deerA$dtL<-strptime(deerA$dt, "%m/%d/%Y %H:%M",tz="America/Chicago")
+deerA$dtL<-as.POSIXct(deerA$dtL)
+head(deerA)
+deerA$month<-as.numeric(format(deerA$dtL,"%m"))
+table(deerA$month)
+deerA$monthday<-format(deerA$dtL, format="%m-%d")
+
+deerA$season4<-NA
+deerA$season4[deerA$monthday>"03-15" & deerA$monthday<="06-15"]<- "Spring"
+deerA$season4[deerA$monthday>"06-15" & deerA$monthday<="09-15"]<- "Summer"
+deerA$season4[deerA$monthday>"09-15" & deerA$monthday<="12-15"]<- "Fall"
+deerA$season4[deerA$monthday>"12-15" | deerA$monthday<="03-15"]<- "Winter"
+
+table(deerA$season4)
+
+hab<-deerA %>% 
+  group_by(animalID,cover,season4) %>% 
+  summarise(Frequency = sum(y))
+
+tot<-deerA %>% 
+  group_by(animalID,season4) %>% 
+  summarise(Frequency = sum(y))
+
+hab<-as.data.frame(hab)
+tot<-as.data.frame(tot)
+
+per<-merge(hab,tot,by=c("animalID","season4"),all.x=TRUE)
+
+colnames(per)<-c("animalID","season4","cover","use","total")
+per$percent<-per$use/per$total
+head(per)
+
+boxplot(percent~cover+season4,data=per)
+
+ave<-aggregate(x=per,by=list())
+aveAMhabuse_season4<-aggregate( percent~cover+season4,data=per, FUN = "mean")
+
+write.csv(aveAMhabuse_season4,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/DeerUse_PercentMeth/HabUse_AMcat_season4.csv")
 
 deerSum<-deerA[deerA$season=="summer",]
 head(deerSum)
@@ -75,7 +115,7 @@ aggregate( percent~cover,data=per, FUN = "mean")
 aggregate( percent~cover,data=per, FUN = "sd")
 
 
-?aggregate
+
 ###re-do but also by region
 unique(deerSum$region)
 
@@ -173,16 +213,139 @@ system.time(habCptsDF2$lidar<-extract(lidar, habCpts))
 str(habCptsDF2)
 summary(habCptsDF2$lidar[,1])
 
+
+#LID is LiDAR from James, NLCD is actually LIdAR from Knight Group
+AllHab<-raster("E:/ZooLaptop_062817/DeerData/for_Zoo/GIS_files/GIS_Ditmer/Deer_NE_LiDAR-20170523T184449Z-001/Deer_NE_LiDAR/MN_LandCover_2014_Arrowhead.img")
+AllHabC<-crop(AllHab, under)
+plot(AllHabC)
+system.time(habCptsDF2$AllHab<-extract(AllHabC, habCpts))
+summary(habCptsDF2$AllHab)
+
+head(habCptsDF2)
 habCptsDF2C<-na.omit(habCptsDF2, cols="lidar[,1]")
 
+saveRDS(habCptsDF2C,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/LandscapePts_032018.R")
+habCptsDF2C<-readRDS("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/LandscapePts_032018.R")
+
+str(habCptsDF2C)
+
+habCptsDF2C$elev_P75_0p15plus_30METERS_UTM15<-habCptsDF2C$lidar[,1]
+habCptsDF2C$Canopy_Prop3m_UTM<-habCptsDF2C$lidar[,2]
+habCptsDF2C$Prop_1_3m<-habCptsDF2C$lidar[,3]
+
+habCptsDF2C$lidar<-NULL
+str(habCptsDF2C)
+
+habCptsDF2C2<-habCptsDF2C[,1:7]
+
+habCptsDF2CDF<-as.data.frame(habCptsDF2C2)
+str(habCptsDF2C2)
+
+D1<-as.data.frame(habCptsDF2C2$NLCD_RCL_AM)
+habCptsDF2C_AM <- SpatialPointsDataFrame(habCptsDF2C2[,c("x", "y")], data=D1)
+
+D2<-as.data.frame(habCptsDF2C2$AllHab)
+habCptsDF2C_AllH <- SpatialPointsDataFrame(habCptsDF2C2[,c("x", "y")], data=D2)
+
+D3<-as.data.frame(habCptsDF2C2$elev_P75_0p15plus_30METERS_UTM15)
+habCptsDF2C_CanH <- SpatialPointsDataFrame(habCptsDF2C2[,c("x", "y")], data=D3)
+
+D4<-as.data.frame(habCptsDF2C2$Canopy_Prop3m_UTM)
+habCptsDF2C_CanP <- SpatialPointsDataFrame(habCptsDF2C2[,c("x", "y")], data=D4)
+
+D5<-as.data.frame(habCptsDF2C2$Prop_1_3m)
+habCptsDF2C_GrCov <- SpatialPointsDataFrame(habCptsDF2C2[,c("x", "y")], data=D5)
+
+
+str(habCptsDF2C)
 #create a raster from the points
-rasttest<-rasterFromXYZ(vegRpts3_SprCrep2)
-plot(rasttest)
-str(rasttest)
+
+Landrast_AM<-rasterFromXYZ(habCptsDF2C_AM)
+plot(Landrast_AM)
+
+Landrast_AllH<-rasterFromXYZ(habCptsDF2C_AllH)
+plot(Landrast_AllH)
+
+Landrast_CanH<-rasterFromXYZ(habCptsDF2C_CanH)
+plot(Landrast_CanH)
+
+Landrast_CanP<-rasterFromXYZ(habCptsDF2C_CanP)
+plot(Landrast_CanP)
+
+Landrast_GrCov<-rasterFromXYZ(habCptsDF2C_GrCov)
+plot(Landrast_GrCov)
+
+Landrast<-stack(Landrast_AM,Landrast_AllH,Landrast_CanH,Landrast_CanP,Landrast_GrCov)
+plot(Landrast)
+
+str(Landrast)
+plot(Landrast,4)
+str(Landrast)
+
+Landrast_sp<-as(Landrast,"SpatialPixelsDataFrame")
+class(Landrast_sp)
+
+Landrast_ras<-brick(Landrast_sp)
+
 
 #write that raster! (two types here)
-writeRaster(rasttest,"F:/Moose/FPT/DataProc/RSF_Predictions/Spatial/WinNight.grd")
-writeRaster(rasttest,"F:/Moose/FPT/DataProc/RSF_Predictions/Spatial/WinNight.asc")
+writeRaster(Landrast_ras,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/Landrast.tif")
+#writeRaster(Landrast,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/Landrast.asc",format="raster")
+str(Landrast_ras)
+
+
+####Deer Use V.1 - % on Amanda Groups
+#instead of making new rasters for each could just extract from moose HR and multiply by the values....
+
+#Read in all shapefiles individually
+setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_summer_poly/")
+shps <- dir(getwd(), "*.shp")
+shps <- sub('\\.shp$',"", shps)
+shps
+for (shp in shps) assign(shp, readOGR('.',layer=shp))
+
+plot(X178_2015_Summer.X178_BB90_poly,add=TRUE)
+plot(X192_2015_Summer.X192_BB90_poly,add=TRUE)
+
+summerMooseBB90HR<-rbind(X11_2013_Summer.X11_BB90_poly,X13_2013_Summer.X13_BB90_poly,X15_2013_Summer.X15_BB90_poly,  
+                         X151_2014_Summer.X151_BB90_poly,X156_2014_Summer.X156_BB90_poly,X157_2016_Summer.X157_BB90_poly,
+                         X158_2016_Summer.X158_BB90_poly,X161_2015_Summer.X161_BB90_poly,X178_2014_Summer.X178_BB90_poly,
+                         X178_2015_Summer.X178_BB90_poly,X181_2015_Summer.X181_BB90_poly,X181_2016_Summer.X181_BB90_poly,
+                         X19_2013_Summer.X19_BB90_poly,X192_2015_Summer.X192_BB90_poly,X200_2015_Summer.X200_BB90_poly,
+                         X202_2015_Summer.X202_BB90_poly,X205_2015_Summer.X205_BB90_poly,X31_2013_Summer.X31_BB90_poly,  
+                         X58_2013_Summer.X58_BB90_poly)
+plot(summerMooseBB90HR,col="red")
+head(summerMooseBB90HR)
+str(summerMooseBB90HR)
+
+
+newproj<-projection(summerMooseBB90HR)
+newproj2<-projection(habC)
+
+#Transformations
+plot(habC)
+#habC<- projectRaster(habC, crs=newproj)
+
+summerMooseBB90HR2 <- spTransform(summerMooseBB90HR, crs(newproj2))
+plot(summerMooseBB90HR2,col="red")
+summerMoosedeer<-mask(crop(habC,summerMooseBB90HR2),summerMooseBB90HR2)
+
+
+
+
+
+
+
+
+
+
+aveAMhabuse_season4<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/DeerUse_PercentMeth/HabUse_AMcat_season4.csv")
+plot(Landrast_ras[[1]])
+str(Landrast_ras[[1]])
+table(Landrast_ras[[1]]@data@values)
+SpringDeerAMPer<-Landrast_ras[[1]]
+
+SpringDeerAMPer<-with(Landrast_ras[[1]], ifelse(Landrast_ras[[1]] < 1, Spr$percent, ifelse(x > 0.15 & dif < 0, 2, 1)))
 
 
 
