@@ -492,14 +492,14 @@ library(tools)   # unless already loaded, comes with base R
 library(PBSmapping)
 library(maptools)
 #great way to read in a bunch of dataframes
-setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_summer/")
+setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_fall/")
 file_list <- list.files()
  file_list 
  filenames<-unique(file_path_sans_ext(file_list))
 
- setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_summer_poly/")
- for (i in 2:length(filenames)){
- test<-readOGR(dsn="C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_summer",layer=filenames[i])
+ setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_fall_poly/")
+ for (i in 1:length(filenames)){
+ test<-readOGR(dsn="C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_fall",layer=filenames[i])
  
  var_temp <- SpatialLines2PolySet(test)
  sp_try <- PolySet2SpatialPolygons(var_temp)
@@ -509,7 +509,7 @@ file_list <- list.files()
  p
  assign(paste(filenames[i],"poly",sep="_"), p )
  
- writeOGR(p,paste(filenames[i],"poly.shp",sep="_"),"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_summer_poly/",driver="ESRI Shapefile")
+ writeOGR(p,paste(filenames[i],"poly.shp",sep="_"),"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_fall_poly/",driver="ESRI Shapefile")
  print(i)
  }
  

@@ -297,6 +297,7 @@ str(Landrast_ras)
 ####Deer Use V.1 - % on Amanda Groups
 #instead of making new rasters for each could just extract from moose HR and multiply by the values....
 
+####Summer moose HR
 #Read in all shapefiles individually
 setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_summer_poly/")
 shps <- dir(getwd(), "*.shp")
@@ -318,6 +319,54 @@ plot(summerMooseBB90HR,col="red")
 head(summerMooseBB90HR)
 str(summerMooseBB90HR)
 
+####Spring moose HR
+#Read in all shapefiles individually
+setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_spring_poly/")
+shps <- dir(getwd(), "*.shp")
+shps <- sub('\\.shp$',"", shps)
+shps
+for (shp in shps) assign(shp, readOGR('.',layer=shp))
+
+plot(X178_2015_Spring.X178_BB90_poly,add=TRUE)
+plot(X192_2015_Spring.X192_BB90_poly,add=TRUE)
+
+springMooseBB90HR<-rbind(X11_2013_Spring.X11_BB90_poly,X13_2013_Spring.X13_BB90_poly,X13_2014_Spring.X13_BB90_poly,X15_2013_Spring.X15_BB90_poly,  
+                         X15_2014_Spring.X15_BB90_poly,X151_2014_Spring.X151_BB90_poly,X156_2014_Spring.X156_BB90_poly,X156_2015_Spring.X156_BB90_poly,X157_2016_Spring.X157_BB90_poly,
+                         X157_2017_Spring.X157_BB90_poly,X158_2016_Spring.X158_BB90_poly,X161_2015_Spring.X161_BB90_poly,
+                         X178_2015_Spring.X178_BB90_poly,X181_2016_Spring.X181_BB90_poly,
+                         X19_2013_Spring.X19_BB90_poly,X192_2015_Spring.X192_BB90_poly,X200_2015_Spring.X200_BB90_poly,X200_2016_Spring.X200_BB90_poly,
+                         X202_2016_Spring.X202_BB90_poly,X205_2015_Spring.X205_BB90_poly,X31_2013_Spring.X31_BB90_poly,  
+                         X58_2013_Spring.X58_BB90_poly,X90_2013_Spring.X90_BB90_poly)
+unique(springMooseBB90HR$ID)
+plot(springMooseBB90HR,col="red")
+head(springMooseBB90HR)
+str(springMooseBB90HR)
+
+####Fall moose HR
+#Read in all shapefiles individually
+setwd("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/BrownBridge90_fall_poly/")
+shps <- dir(getwd(), "*.shp")
+shps <- sub('\\.shp$',"", shps)
+shps
+for (shp in shps) assign(shp, readOGR('.',layer=shp))
+
+plot(X200_2015_Fall.X200_BB90_poly)
+plot(X192_2015_Fall.X192_BB90_poly,add=TRUE)
+
+fallMooseBB90HR<-rbind(X13_2013_Fall.X13_BB90_poly,X15_2013_Fall.X15_BB90_poly,  
+                         X156_2014_Fall.X156_BB90_poly,X157_2016_Fall.X157_BB90_poly,
+                         X158_2016_Fall.X158_BB90_poly,
+                         X178_2014_Fall.X178_BB90_poly,X181_2015_Fall.X181_BB90_poly,
+                         X19_2013_Fall.X19_BB90_poly,X192_2015_Fall.X192_BB90_poly,X200_2015_Fall.X200_BB90_poly,
+                         X202_2015_Fall.X202_BB90_poly,X205_2015_Fall.X205_BB90_poly,X31_2013_Fall.X31_BB90_poly,  
+                         X58_2013_Fall.X58_BB90_poly)
+unique(fallMooseBB90HR$ID)
+plot(fallMooseBB90HR,col="red")
+head(fallMooseBB90HR)
+str(fallMooseBB90HR)
+
+
+
 
 newproj<-projection(summerMooseBB90HR)
 newproj2<-projection(habC)
@@ -325,38 +374,81 @@ newproj2<-projection(habC)
 #Transformations
 plot(habC)
 #habC<- projectRaster(habC, crs=newproj)
-
+fallMooseBB90HR2 <- spTransform(fallMooseBB90HR, crs(newproj2))
+springMooseBB90HR2 <- spTransform(springMooseBB90HR, crs(newproj2))
 summerMooseBB90HR2 <- spTransform(summerMooseBB90HR, crs(newproj2))
 plot(summerMooseBB90HR2,col="red")
-# summerMoosedeer<-mask(crop(habC,summerMooseBB90HR2),summerMooseBB90HR2)
-# str(summerMoosedeer)
-# plot(summerMoosedeer)
 
 
 
-
+#Amanda deer habitat layer
 # Extract raster values to polygons                             
-( v <- extract(habC, summerMooseBB90HR2) )
-
+( v <- extract(habC, springMooseBB90HR2) )
 # Get class counts for each polygon
 v.counts <- lapply(v,table)
-
 # Calculate class percentages for each polygon
 ( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
-
+( v.raw <- lapply(v.counts, FUN=function(x){ x } ) )
 # Create a data.frame where missing classes are NA
 class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(habC)))))  
+class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(habC)))))  
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0  
+class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.df)
+head(class.dfraw)
+names(class.df) <- paste(c("FrgH","PrH","WtH","aHab"))
+names(class.dfraw) <- paste(c("FrgHC","PrHC","WtHC","aHabC"))
+AMclassDeer<-class.df
+AMclassDeer2<-class.dfraw
+# Add back to polygon data
+springMooseBB90HR2@data <- data.frame(springMooseBB90HR2@data, AMclassDeer,AMclassDeer2)
+head(springMooseBB90HR2@data)
 
+
+
+#LIDAR NLCD deer habitat layer
+# Extract raster values to polygons                             
+( v <- extract(AllHabC, springMooseBB90HR2) )
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
+# Calculate class percentages for each polygon
+( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
+( v.raw <- lapply(v.counts, FUN=function(x){ x } ) )
+# Create a data.frame where missing classes are NA
+class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(AllHabC)))))
+class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(AllHabC)))))  
 # Replace NA's with 0 and add names
 class.df[is.na(class.df)] <- 0   
-names(class.df) <- paste("class", names(class.df),sep="")
+class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.dfraw)
 
-AMclassDeer<-class.df
+# Developed	100
+# Emergent Wetlands 	101
+# Forested and Shrub Wetlands 	102
+# Open Water	103
+# Extraction	104
+# Coniferous Forest	105
+# Deciduous Forest	106
+# Mixed Forest	107
+# Regenerated Forest	108
+# Grassland 	109
+# Hay and Pasture	110
+
+
+names(class.df) <- paste(c("Devel","EmWet","WoodyWet","OpenWater","ConFrst","DecidFrst","MixFrst","RegenFrst","Grass"))
+names(class.dfraw) <- paste(c("DevelC","EmWetC","WoodyWetC","OpenWaterC","ConFrstC","DecidFrstC","MixFrstC","RegenFrstC","GrassC"))
+AllHabclassDeer<-class.df
+AllHabclassDeer2<-class.dfraw
 # Add back to polygon data
-summerMooseBB90HR2@data <- data.frame(summerMooseBB90HR2@data, AMclassDeer)
-head(summerMooseBB90HR2@data)
+springMooseBB90HR2@data <- data.frame(springMooseBB90HR2@data, AllHabclassDeer,AllHabclassDeer2)
+head(springMooseBB90HR2@data)
 
+springMooseBB90HR2@data$NA..3<-NULL
 
+write.csv(springMooseBB90HR2,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/Spring_MooseHR_HabPer_032218.csv")
+
+#s <- calc(r, fun=function(x){ x[x < 4] <- NA; return(x)} )
 
 
 aveAMhabuse_season4<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/DeerUse_PercentMeth/HabUse_AMcat_season4.csv")
