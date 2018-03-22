@@ -328,13 +328,33 @@ plot(habC)
 
 summerMooseBB90HR2 <- spTransform(summerMooseBB90HR, crs(newproj2))
 plot(summerMooseBB90HR2,col="red")
-summerMoosedeer<-mask(crop(habC,summerMooseBB90HR2),summerMooseBB90HR2)
+# summerMoosedeer<-mask(crop(habC,summerMooseBB90HR2),summerMooseBB90HR2)
+# str(summerMoosedeer)
+# plot(summerMoosedeer)
 
 
 
 
+# Extract raster values to polygons                             
+( v <- extract(habC, summerMooseBB90HR2) )
 
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
 
+# Calculate class percentages for each polygon
+( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
+
+# Create a data.frame where missing classes are NA
+class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(habC)))))  
+
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0   
+names(class.df) <- paste("class", names(class.df),sep="")
+
+AMclassDeer<-class.df
+# Add back to polygon data
+summerMooseBB90HR2@data <- data.frame(summerMooseBB90HR2@data, AMclassDeer)
+head(summerMooseBB90HR2@data)
 
 
 
