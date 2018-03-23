@@ -15,6 +15,7 @@ library(ggmap)
 library(mapproj)
 library(ctmm)
 library(move)
+library(dplyr)
 
 
 
@@ -62,12 +63,14 @@ deerA$season4[deerA$monthday>"09-15" & deerA$monthday<="12-15"]<- "Fall"
 deerA$season4[deerA$monthday>"12-15" | deerA$monthday<="03-15"]<- "Winter"
 
 table(deerA$season4)
+table(deerA$y)
+deerAY<-deerA[deerA$y==1,]
 
-hab<-deerA %>% 
+hab<-deerAY %>% 
   group_by(animalID,cover,season4) %>% 
   summarise(Frequency = sum(y))
 
-tot<-deerA %>% 
+tot<-deerAY %>% 
   group_by(animalID,season4) %>% 
   summarise(Frequency = sum(y))
 
@@ -82,15 +85,88 @@ head(per)
 
 boxplot(percent~cover+season4,data=per)
 
-ave<-aggregate(x=per,by=list())
-aveAMhabuse_season4<-aggregate( percent~cover+season4,data=per, FUN = "mean")
 
-write.csv(aveAMhabuse_season4,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/DeerUse_PercentMeth/HabUse_AMcat_season4.csv")
+aveAMhabuse_season4<-aggregate( percent~cover+season4,data=per, FUN = "mean")
+colnames(aveAMhabuse_season4)<-c("cover","season4","mean per")
+
+aveAMhabuse_season4sd<-aggregate( percent~cover+season4,data=per, FUN = "sd")
+colnames(aveAMhabuse_season4sd)<-c("cover","season4","sd per")
+aveAMhabuse_season4n<-aggregate( percent~cover+season4,data=per, function(x) length(unique(x)))
+colnames(aveAMhabuse_season4n)<-c("cover","season4","sample size")
+
+aveAMhabuse_season4_byindiv<-cbind(aveAMhabuse_season4,aveAMhabuse_season4sd,aveAMhabuse_season4n)
+
+aveAMhabuse_season4_byindiv[,c(4:5,7:8)]<-NULL
+
+aveAMhabuse_season4_byindiv$LOCI<-aveAMhabuse_season4_byindiv$`mean per`-((aveAMhabuse_season4_byindiv$`sd per`/sqrt(aveAMhabuse_season4_byindiv$`sample size`)*1.96))
+aveAMhabuse_season4_byindiv$HICI<-aveAMhabuse_season4_byindiv$`mean per`+((aveAMhabuse_season4_byindiv$`sd per`/sqrt(aveAMhabuse_season4_byindiv$`sample size`)*1.96))
+
+
+write.csv(aveAMhabuse_season4,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData//HabUse_AMcat_season4_032318.csv")
+
+#repeat all of this but for the NLCD lidar data!
+#first need to extract the values
+head(deerAY)
+
+#LID is LiDAR from James, NLCD is actually LIdAR from Knight Group
+AllHab<-raster("E:/ZooLaptop_062817/DeerData/for_Zoo/GIS_files/GIS_Ditmer/Deer_NE_LiDAR-20170523T184449Z-001/Deer_NE_LiDAR/MN_LandCover_2014_Arrowhead.img")
+AllHabC<-crop(AllHab, under)
+plot(AllHabC)
+system.time(deerAY$NLCDLID<-extract(AllHabC, deerAY[,8:9]))
+
+table(deerAY$season4)
+
+hab<-deerAY %>% 
+  group_by(animalID,NLCDLID,season4) %>% 
+  summarise(Frequency = sum(y))
+
+tot<-deerAY %>% 
+  group_by(animalID,season4) %>% 
+  summarise(Frequency = sum(y))
+
+hab<-as.data.frame(hab)
+tot<-as.data.frame(tot)
+
+head(hab)
+
+per<-merge(hab,tot,by=c("animalID","season4"),all.x=TRUE)
+
+colnames(per)<-c("animalID","season4","NLCDLIDcover","use","total")
+per$percent<-per$use/per$total
+head(per)
+
+boxplot(percent~NLCDLIDcover,data=per)
+
+#ave<-aggregate(x=per,by=list())
+aveNLCDuse_season4<-aggregate( percent~NLCDLIDcover+season4,data=per, FUN = "mean")
+colnames(aveNLCDuse_season4)<-c("NLCDLIDcover","season4","mean per")
+
+aveNLCDuse_season4sd<-aggregate( percent~NLCDLIDcover+season4,data=per, FUN = "sd")
+colnames(aveNLCDuse_season4sd)<-c("NLCDLIDcover","season4","sd per")
+aveNLCDuse_season4n<-aggregate( percent~NLCDLIDcover+season4,data=per, function(x) length(unique(x)))
+colnames(aveNLCDuse_season4n)<-c("NLCDLIDcover","season4","sample size")
+
+aveNLCDuse_season4_byindiv<-cbind(aveNLCDuse_season4,aveNLCDuse_season4sd,aveNLCDuse_season4n)
+
+aveNLCDuse_season4_byindiv[,c(4:5,7:8)]<-NULL
+
+aveNLCDuse_season4_byindiv$LOCI<-aveNLCDuse_season4_byindiv$`mean per`-((aveNLCDuse_season4_byindiv$`sd per`/sqrt(aveNLCDuse_season4_byindiv$`sample size`)*1.96))
+aveNLCDuse_season4_byindiv$HICI<-aveNLCDuse_season4_byindiv$`mean per`+((aveNLCDuse_season4_byindiv$`sd per`/sqrt(aveNLCDuse_season4_byindiv$`sample size`)*1.96))
+
+
+write.csv(aveNLCDuse_season4_byindiv,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData//HabUse_NLCDLIDcat_season4_032318.csv")
+
+
+
+
+
+
+
 
 deerSum<-deerA[deerA$season=="summer",]
 head(deerSum)
 
-library(dplyr)
+
 hab<-deerSum %>% 
   group_by(animalID,cover) %>% 
   summarise(Frequency = sum(y))
