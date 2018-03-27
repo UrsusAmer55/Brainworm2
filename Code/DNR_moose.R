@@ -204,7 +204,7 @@ MB3<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Moveba
 testO<-move("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_092717.csv")
 str(testO)
 head(MB3)
-str(test)
+summary(MB3$visible)
 Move3<-move(MB3)
 
 Amy<-test@trackId[1]

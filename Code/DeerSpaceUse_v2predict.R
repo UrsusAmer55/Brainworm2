@@ -536,6 +536,120 @@ SpringDeerAMPer<-Landrast_ras[[1]]
 SpringDeerAMPer<-with(Landrast_ras[[1]], ifelse(Landrast_ras[[1]] < 1, Spr$percent, ifelse(x > 0.15 & dif < 0, 2, 1)))
 
 
+#Disturbance hypothesis
+
+#extract for distruabnce time (CSV contains table for value matchup)
+disturb<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/disturb09clsUTM.tif")
+dist_tab<-read.csv("E:/ZooLaptop_062817/NE/Wolf/OutsideSpatial/RDS-2016-0001/Data/DISTURB_table.csv")
+
+plot(disturb)
+disturb2000<-disturb>5
+plot(disturb2000)
+
+newproj<-projection(fallMooseBB90HR)
+disturb2000p<-projectRaster(disturb2000,crs=newproj)
+
+
+#disturbed layer
+# Extract raster values to polygons                             
+( v <- extract(disturb2000, fallMooseBB90HR) )
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
+# Calculate class percentages for each polygon
+( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
+( v.raw <- lapply(v.counts, FUN=function(x){ x } ) )
+# Create a data.frame where missing classes are NA
+class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(disturb2000)))))  
+class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(disturb2000)))))  
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0  
+class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.df)
+head(class.dfraw)
+names(class.df) <- paste(c("undisturbed2000","disturbed2000"))
+names(class.dfraw) <- paste(c("undisturbed2000","disturbed2000"))
+disturbed0009<-class.df
+disturbed0009r<-class.dfraw
+# Add back to polygon data
+fallMooseBB90HR@data <- data.frame(fallMooseBB90HR@data, disturbed0009,disturbed0009r)
+head(fallMooseBB90HR@data)
+
+fallMooseBB90HR$season<-"fall"
+
+write.csv(fallMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/fall_Disturb2000_2009_032618.csv")
+
+
+###deer permit areas
+#use a centroud points to extract
+
+str(fallMooseBB90HR)
+fallcent <- getSpPPolygonsLabptSlots(fallMooseBB90HR)
+springcent <- getSpPPolygonsLabptSlots(springMooseBB90HR)
+summercent <- getSpPPolygonsLabptSlots(summerMooseBB90HR)
+
+plot(fallMooseBB90HR)
+fallcentSP<-SpatialPointsDataFrame(coords=fallcent[,1:2],data=as.data.frame(fallcent),proj4string=CRS("+proj=utm +zone=15 ellps=WGS84"))
+
+plot(fallcentSP,add=TRUE,col="red")
+
+fallcent<-cbind(as.data.frame(fallMooseBB90HR@data$ID),fallcent)
+springcent<-cbind(as.data.frame(springMooseBB90HR@data$ID),springcent)
+summercent<-cbind(as.data.frame(summerMooseBB90HR@data$ID),summercent)
+
+colnames(fallcent)<-c("ID","X","Y")
+colnames(springcent)<-c("ID","X","Y")
+colnames(summercent)<-c("ID","X","Y")
+
+
+allcent<-rbind(fallcent,springcent,summercent)
+
+write.csv(fallcent,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/fall_BBridge_ventroids_032618.csv")
+write.csv(springcent,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/spring_BBridge_ventroids_032618.csv")
+write.csv(summercent,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/summer_BBridge_ventroids_032618.csv")
+write.csv(allcent,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/allcentroids_BBridge_ventroids_032618.csv")
+
+allcentSP<-SpatialPointsDataFrame(coords=allcent[,2:3],data=as.data.frame(allcent),proj4string=CRS("+proj=utm +zone=15 ellps=WGS84"))
+
+
+deerharv14<-readOGR(dsn="C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_env_mn_deer_harvest",layer="deer_harvest_2014")
+plot(deerharv14)
+plot(allcentSP,add=TRUE)
+
+deerproj<-projection(deerharv14)
+allcentSP2<-spTransform(allcentSP, crs(deerproj))
+
+allcentSP_deer14<-extract(deerharv14,allcentSP2)
+names(allcentSP_deer14)
+allcentSP_deer14<-allcentSP_deer14[,14]
+allcentSP_deer14<-as.data.frame(allcentSP_deer14)
+colnames(allcentSP_deer14)<-c("deerharvSQMI2014")
+
+
+deerharv13<-readOGR(dsn="C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_env_mn_deer_harvest",layer="deer_harvest_2013")
+allcentSP_deer13<-extract(deerharv13,allcentSP2)
+names(allcentSP_deer13)
+allcentSP_deer13<-allcentSP_deer13[,14]
+allcentSP_deer13<-as.data.frame(allcentSP_deer13)
+colnames(allcentSP_deer13)<-c("deerharvSQMI2013")
+
+
+deerharv12<-readOGR(dsn="C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_env_mn_deer_harvest",layer="deer_harvest_2012")
+allcentSP_deer12<-extract(deerharv12,allcentSP2)
+names(allcentSP_deer12)
+allcentSP_deer12<-allcentSP_deer12[,14]
+allcentSP_deer12<-as.data.frame(allcentSP_deer12)
+colnames(allcentSP_deer12)<-c("deerharvSQMI2012")
+
+deerharv<-cbind(as.data.frame(allcentSP),allcentSP_deer12,allcentSP_deer13,allcentSP_deer14)
+deerharv$harvestAVE<-(deerharv$deerharvSQMI2012+deerharv$deerharvSQMI2013+deerharv$deerharvSQMI2014)/3
+hist(deerharv$harvestAVE)
+
+write.csv(deerharv,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/deerharvest_centroids_032618.csv")
+
+
+DEM<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/LCCMR17/White_Tail_CC/GIS Layers/elevCC500")
+DEM
+plot(DEM,add=TRUE)
 
 
 
