@@ -268,6 +268,51 @@ lidar<-stack(canheight,cancover,under)
 str(lidar)
 plot(lidar)
 
+#predictions from Amanda's RSF
+
+
+
+under
+canheight
+cancover
+habC
+
+ext<-extent(habC)
+CTI2<-setExtent(CTI, ext)
+CTI2 <- resample(CTI2, FrstHab)
+
+#create a separate raster for each cover type
+habC0<-habC==0
+habC1<-habC==1
+habC2<-habC==2
+habC3<-habC==3
+habC4<-habC==4
+plot(habC1)
+plot(habC3)
+
+#fall coeff other than hab categories
+canheightCOEF<--.6
+cancoverCOEF<--1.1
+underCOEF<-.019
+
+#calculate values for each habitat category (add in coeff for habitat below), should be a value of 0 if not in a given habitat types
+AMpredictFall_habC0<-(habC0*3.1+((under*underCOEF)*habC0)+((canheight*canheightCOEF)*habC0)+((cancover*cancoverCOEF)*habC0))
+plot(AMpredictFall_hab0)
+AMpredictFall_habC1<-(habC1*3.1+((under*underCOEF)*habC1)+((canheight*canheightCOEF)*habC1)+((cancover*cancoverCOEF)*habC1))
+AMpredictFall_habC2<-(habC2*2.0+((under*underCOEF)*habC2)+((canheight*canheightCOEF)*habC2)+((cancover*cancoverCOEF)*habC2))
+AMpredictFall_habC3<-(habC3*-1.2+((under*underCOEF)*habC3)+((canheight*canheightCOEF)*habC3)+((cancover*cancoverCOEF)*habC3))
+AMpredictFall_habC4<-(habC4*-3+((under*underCOEF)*habC4)+((canheight*canheightCOEF)*habC4)+((cancover*cancoverCOEF)*habC4))
+#add up all of the rasters
+AMpredictFall_habC_ALL<-AMpredictFall_habC0+AMpredictFall_habC1+AMpredictFall_habC2+AMpredictFall_habC3+AMpredictFall_habC4
+plot(AMpredictFall_habC_ALL)
+hist(AMpredictFall_habC_ALL)
+summary(AMpredictFall_habC_ALL)
+
+
+
+
+setExtent(habC)
+
 
 #habitat - amanda class - NLCD_RCL_AM
 hab<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/CreateAM_RSF/NLCD_RCL_AM")
@@ -366,6 +411,11 @@ Landrast_ras<-brick(Landrast_sp)
 
 #write that raster! (two types here)
 writeRaster(Landrast_ras,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/Landrast.tif")
+
+AllR<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/Landrast.tif")
+plot(AllR,5)
+
+
 #writeRaster(Landrast,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/RiskMaps/Landrast.asc",format="raster")
 str(Landrast_ras)
 
@@ -647,25 +697,131 @@ hist(deerharv$harvestAVE)
 write.csv(deerharv,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/deerharvest_centroids_032618.csv")
 
 
-DEM<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/LCCMR17/White_Tail_CC/GIS Layers/elevCC500")
-DEM
-plot(DEM,add=TRUE)
+#Recent cuts/disturbance of state and national lands
+RecentCut<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_biota_dnr_forest_stand_inventory/FedNStateCut0918.tif")
+RecentCut
+plot(RecentCut)
+plot(fallMooseBB90HR,add=TRUE)
+
+#disturbed layer
+# Extract raster values to polygons                             
+( v <- extract(RecentCut, summerMooseBB90HR) )
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
+# Calculate class percentages for each polygon
+( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
+( v.raw <- lapply(v.counts, FUN=function(x){ x } ) )
+# Create a data.frame where missing classes are NA
+#removed the transpose ("t()")
+class.df <- as.data.frame(sapply(v.pct,'[',1:length(unique(RecentCut)))) 
+class.dfraw <- as.data.frame(sapply(v.raw,'[',1:length(unique(RecentCut))))  
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0  
+class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.df)
+head(class.dfraw)
+names(class.df) <- paste(c("RecentCut2009_2018"))
+names(class.dfraw) <- paste(c("RecentCut2009_2018_raw"))
+RecentCut2009_2018<-class.df
+RecentCut2009_2018r<-class.dfraw
+# Add back to polygon data
+summerMooseBB90HR@data <- data.frame(summerMooseBB90HR@data, RecentCut2009_2018,RecentCut2009_2018r)
+head(summerMooseBB90HR@data)
+
+#get cut area by multiplying count of raw cells by cell size
+summerMooseBB90HR$CutArea<-summerMooseBB90HR$RecentCut2009_2018_raw*(30*30)
+
+summerMooseBB90HR$season<-"summer"
+
+write.csv(summerMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/summer_Disturb2009_2018_032818.csv")
+
+########wet forests
+FrstHab<-AllHabC>=105&AllHabC<=108
+plot(FrstHab)
+
+CTI<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/Soil/CTI_v1")
+
+ext<-extent(FrstHab)
+CTI2<-setExtent(CTI, ext)
+CTI2 <- resample(CTI2, FrstHab)
+CTIfor<-CTI2*FrstHab
+plot(CTIfor)
+CTIforSTAN<-CTIfor/22.2058
+plot(CTIforSTAN)
+CTIforSTAN60<-CTIforSTAN>=.5
+plot(CTIforSTAN60)
+plot(summerMooseBB90HR,add=TRUE,col="red")
+
+#wet forest
+
+#disturbed layer
+# Extract raster values to polygons                             
+( v <- extract(CTIforSTAN60, fallMooseBB90HR) )
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
+# Calculate class percentages for each polygon
+( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
+( v.raw <- lapply(v.counts, FUN=function(x){ x } ) )
+# Create a data.frame where missing classes are NA
+#removed the transpose ("t()")
+class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(CTIforSTAN60))))) 
+class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(CTIforSTAN60)))))  
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0  
+class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.df)
+head(class.dfraw)
+names(class.df) <- paste(c("CTIforSTAN50_drypercent","CTIforSTAN50_wetpercent"))
+names(class.dfraw) <- paste(c("CTIforSTAN50_dryraw","CTIforSTAN50_wetraw"))
+CTIforSTAN50<-class.df
+CTIforSTAN50r<-class.dfraw
+# Add back to polygon data
+fallMooseBB90HR@data <- data.frame(fallMooseBB90HR@data, CTIforSTAN50,CTIforSTAN50r)
+head(fallMooseBB90HR@data)
+
+fallMooseBB90HR$season<-"fall"
+
+write.csv(fallMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/fall_wetforest50_032818.csv")
+
+#calculate BB seasonal HR sizes
+
+fallarea<-as.data.frame(sapply(slot(fallMooseBB90HR, "polygons"), slot, "area"))
+colnames(fallarea)<-"area_m2"
+fallarea$area_km2<-fallarea$area_m2/100000
+fallarea<-cbind(fallMooseBB90HR@data$ID,fallarea)
+colnames(fallarea)[1]<-"ID"
+
+springarea<-as.data.frame(sapply(slot(springMooseBB90HR, "polygons"), slot, "area"))
+colnames(springarea)<-"area_m2"
+springarea$area_km2<-springarea$area_m2/100000
+springarea<-cbind(springMooseBB90HR@data$ID,springarea)
+colnames(springarea)[1]<-"ID"
+
+summerarea<-as.data.frame(sapply(slot(summerMooseBB90HR, "polygons"), slot, "area"))
+colnames(summerarea)<-"area_m2"
+summerarea$area_km2<-summerarea$area_m2/100000
+summerarea<-cbind(summerMooseBB90HR@data$ID,summerarea)
+colnames(summerarea)[1]<-"ID"
+
+allarea<-rbind(summerarea,fallarea,springarea)
+
+write.csv(allarea,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/allarea_032818.csv")
 
 
+#pull in outside moose data especially date of death
+MooseInfo<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/MooseInfo.csv")
 
+###issue of snow out date
+snow<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/TopSecret-2457591210464873654/TopSecret-2457591210464873654.csv")
+head(snow)
+str(snow)
+snow$timestampL<-strptime(snow$timestamp, "%Y-%m-%d %H:%M:%S",tz="America/Chicago")
+snow$animalID<-snow$individual.local.identifier
 
+summary(snow$MODIS.Snow.Terra.Snow.500m.Daily.NDSI.Snow.Cover)
 
-ext<-extent(canheight)
-habCE<-setExtent(habC, ext, keepres=TRUE)
-
-str(habCE)
-plot(habCE)
-
-str(habCE@data@attributes)
-habCE2 <- setValues(raster(habCE), habCE[])
-plot(habCE2)
-
-ncol(habCE)
+p <- ggplot(snow, aes(x=timestampL,y=MODIS.Snow.Terra.Snow.500m.Daily.NDSI.Snow.Cover,group=as.factor(animalID),colour=as.factor(animalID))) + geom_line(size=2)
+p
 
 
 # FITTING A GENERALISED FUNCTIONAL RESPONSE MODEL (see Matthiopoulos et al. 2011)
