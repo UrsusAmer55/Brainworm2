@@ -270,43 +270,192 @@ plot(lidar)
 
 #predictions from Amanda's RSF
 
+NLCD<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/NLCD 2011 - Land Cover1.tif")
 
+NLCDC<-crop(NLCD, under)
 
 under
 canheight
 cancover
-habC
+AllHabC
+
+underZ<-scale(under,center = TRUE, scale = TRUE)
+plot(underZ)
+
+
+cancover100<-cancover*100
+cancover100Z<-scale(cancover100,center = TRUE, scale = TRUE)
+plot(cancover100Z)
+
+plot(canheight)
+canheightZ<-scale(canheight,center = TRUE, scale = TRUE)
+plot(canheightZ)
+
 
 ext<-extent(habC)
 CTI2<-setExtent(CTI, ext)
 CTI2 <- resample(CTI2, FrstHab)
 
 #create a separate raster for each cover type
-habC0<-habC==0
-habC1<-habC==1
-habC2<-habC==2
-habC3<-habC==3
-habC4<-habC==4
-plot(habC1)
-plot(habC3)
+##from the metadata: 11 Open Water, 21:24 Developed, 31 Barren, 41	Deciduous Forest, 42	Evergreen Forest, 43	Mixed Forest, 52	Shrub/Scrub,
+#71	Grassland/Herbaceous, 81	Pasture/Hay, 82	Cultivated Crops, 90	Woody Wetlands, 95	Emergent Herbaceous Wetlands
+unique(NLCDC@data@values)
+table(NLCDC@data@values)
 
-#fall coeff other than hab categories
-canheightCOEF<--.6
-cancoverCOEF<--1.1
-underCOEF<-.019
+#woody wetland
+NLCDC90<-NLCDC==90
+
+#deciduous forest
+NLCDC41<-NLCDC==41
+
+#mixed forest
+NLCDC43<-NLCDC==43
+
+#conifer forest
+NLCDC42<-NLCDC==42
+
+#shrub
+NLCDC52<-NLCDC==52
+
+#other
+NLCDC21<-NLCDC==21
+NLCDC22<-NLCDC==22
+NLCDC23<-NLCDC==23
+NLCDC24<-NLCDC==24
+NLCDC95<-NLCDC==95
+NLCDC81<-NLCDC==81
+NLCDC82<-NLCDC==82
+NLCDC71<-NLCDC==71
+
+NLCDCother<-NLCDC21+NLCDC22+NLCDC23+NLCDC24+NLCDC95+NLCDC81+NLCDC82+NLCDC71
+plot(NLCDCother)
+
+
+
+#non habitat
+NLCDC0<-NLCDC==0
+NLCDC11<-NLCDC==11
+NLCDC31<-NLCDC==31
+
+NLCDCnon<-NLCDC0+NLCDC11+NLCDC31
+
+plot(NLCDC42)
+
+
+
+#non-snow - non-migratory coeff other than hab categories
+canheightCOEF<--0.01
+cancoverCOEF<--0.12
+underCOEF<--0.03
 
 #calculate values for each habitat category (add in coeff for habitat below), should be a value of 0 if not in a given habitat types
-AMpredictFall_habC0<-(habC0*3.1+((under*underCOEF)*habC0)+((canheight*canheightCOEF)*habC0)+((cancover*cancoverCOEF)*habC0))
-plot(AMpredictFall_hab0)
-AMpredictFall_habC1<-(habC1*3.1+((under*underCOEF)*habC1)+((canheight*canheightCOEF)*habC1)+((cancover*cancoverCOEF)*habC1))
-AMpredictFall_habC2<-(habC2*2.0+((under*underCOEF)*habC2)+((canheight*canheightCOEF)*habC2)+((cancover*cancoverCOEF)*habC2))
-AMpredictFall_habC3<-(habC3*-1.2+((under*underCOEF)*habC3)+((canheight*canheightCOEF)*habC3)+((cancover*cancoverCOEF)*habC3))
-AMpredictFall_habC4<-(habC4*-3+((under*underCOEF)*habC4)+((canheight*canheightCOEF)*habC4)+((cancover*cancoverCOEF)*habC4))
+#other
+AMpredictNoSnow_NLCDCother<-((NLCDCother*.67)+((underZ*underCOEF)*NLCDCother)+((canheightZ*canheightCOEF)*NLCDCother)+((cancover100Z*cancoverCOEF)*NLCDCother))
+plot(AMpredictNoSnow_NLCDCother)
+#woody wet reference (=0)
+AMpredictNoSnow_NLCDC90<-((NLCDC90*0)+((underZ*underCOEF)*NLCDC90)+((canheightZ*canheightCOEF)*NLCDC90)+((cancover100Z*cancoverCOEF)*NLCDC90))
+plot(AMpredictNoSnow_NLCDC90)
+#conifer forest
+AMpredictNoSnow_NLCDC42<-((NLCDC42*.2)+((underZ*underCOEF)*NLCDC42)+((canheightZ*canheightCOEF)*NLCDC42)+((cancover100Z*cancoverCOEF)*NLCDC42))
+plot(AMpredictNoSnow_NLCDC42)
+#deciduous forest
+AMpredictNoSnow_NLCDC41<-(NLCDC41*.61+((underZ*underCOEF)*NLCDC41)+((canheightZ*canheightCOEF)*NLCDC41)+((cancover100Z*cancoverCOEF)*NLCDC41))
+plot(AMpredictNoSnow_NLCDC41)
+#mixed forest
+AMpredictNoSnow_NLCDC43<-((NLCDC43*.40)+((underZ*underCOEF)*NLCDC43)+((canheightZ*canheightCOEF)*NLCDC43)+((cancover100Z*cancoverCOEF)*NLCDC43))
+plot(AMpredictNoSnow_NLCDC43)
+#shrubs
+AMpredictNoSnow_NLCDC52<-((NLCDC52*.61)+((underZ*underCOEF)*NLCDC52)+((canheightZ*canheightCOEF)*NLCDC52)+((cancover100Z*cancoverCOEF)*NLCDC52))
+plot(AMpredictNoSnow_NLCDC52)
+#non-habitat
+AMpredictNoSnow_NLCDCnon<-((NLCDCnon*0)+((underZ*underCOEF)*NLCDCnon)+((canheightZ*canheightCOEF)*NLCDCnon)+((cancover100Z*cancoverCOEF)*NLCDCnon))
+plot(AMpredictNoSnow_NLCDCnon)
+
+
+
 #add up all of the rasters
-AMpredictFall_habC_ALL<-AMpredictFall_habC0+AMpredictFall_habC1+AMpredictFall_habC2+AMpredictFall_habC3+AMpredictFall_habC4
-plot(AMpredictFall_habC_ALL)
-hist(AMpredictFall_habC_ALL)
-summary(AMpredictFall_habC_ALL)
+AMpredictNoSnow_habC_ALL<-AMpredictNoSnow_NLCDCother+AMpredictNoSnow_NLCDC90+AMpredictNoSnow_NLCDC42+AMpredictNoSnow_NLCDC41+AMpredictNoSnow_NLCDC43+
+  AMpredictNoSnow_NLCDC52+ AMpredictNoSnow_NLCDCnon
+# 
+# ?overlay
+# 
+# BR1<-brick(AMpredictNoSnow_NLCDCother,AMpredictNoSnow_NLCDC90,AMpredictNoSnow_NLCDC42,AMpredictNoSnow_NLCDC41,AMpredictNoSnow_NLCDC43,
+#                                           AMpredictNoSnow_NLCDC52, AMpredictNoSnow_NLCDCnon)
+# 
+# BR1O<-overlay(BR1,fun=sum)
+# plot(BR1O)
+# hist(BR1O)
+
+
+par(mfrow=c(2,1))
+hist(BR1O)
+hist(AMpredictNoSnow_habC_ALL)
+#rna <- overlay(r, otherband, fun=function(x,y){if(is.na(y)) return(NA) else return(x)})
+
+
+plot(AMpredictNoSnow_habC_ALL)
+hist(AMpredictNoSnow_habC_ALL)
+summary(AMpredictNoSnow_habC_ALL)
+
+NAcheck<-is.na(AMpredictNoSnow_habC_ALL)
+plot(NAcheck)
+NAcheck_NLCD<-NLCDC*NAcheck
+hist(NAcheck_NLCD)
+freq(NAcheck_NLCD)
+
+writeRaster(AMpredictNoSnow_habC_ALL,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/AmandaRSF/AMpredictNoSnow_habC_ALL.tif")
+
+
+
+
+
+
+#non-snow - MIGRATORY coeff other than hab categories
+canheightCOEF<-0.14
+cancoverCOEF<--0.12
+underCOEF<-0.11
+
+#calculate values for each habitat category (add in coeff for habitat below), should be a value of 0 if not in a given habitat types
+#other
+AMpredictNoSnow_NLCDCotherM<-((NLCDCother*.69)+((underZ*underCOEF)*NLCDCother)+((canheightZ*canheightCOEF)*NLCDCother)+((cancover100Z*cancoverCOEF)*NLCDCother))
+plot(AMpredictNoSnow_NLCDCotherM)
+#woody wet reference (=0)
+AMpredictNoSnow_NLCDC90M<-((NLCDC90*0)+((underZ*underCOEF)*NLCDC90)+((canheightZ*canheightCOEF)*NLCDC90)+((cancover100Z*cancoverCOEF)*NLCDC90))
+plot(AMpredictNoSnow_NLCDC90M)
+#conifer forest
+AMpredictNoSnow_NLCDC42M<-((NLCDC42*.7)+((underZ*underCOEF)*NLCDC42)+((canheightZ*canheightCOEF)*NLCDC42)+((cancover100Z*cancoverCOEF)*NLCDC42))
+plot(AMpredictNoSnow_NLCDC42M)
+#deciduous forest
+AMpredictNoSnow_NLCDC41M<-(NLCDC41*.9+((underZ*underCOEF)*NLCDC41)+((canheightZ*canheightCOEF)*NLCDC41)+((cancover100Z*cancoverCOEF)*NLCDC41))
+plot(AMpredictNoSnow_NLCDC41M)
+#mixed forest
+AMpredictNoSnow_NLCDC43M<-((NLCDC43*.97)+((underZ*underCOEF)*NLCDC43)+((canheightZ*canheightCOEF)*NLCDC43)+((cancover100Z*cancoverCOEF)*NLCDC43))
+plot(AMpredictNoSnow_NLCDC43M)
+#shrubs
+AMpredictNoSnow_NLCDC52M<-((NLCDC52*1.35)+((underZ*underCOEF)*NLCDC52)+((canheightZ*canheightCOEF)*NLCDC52)+((cancover100Z*cancoverCOEF)*NLCDC52))
+plot(AMpredictNoSnow_NLCDC52M)
+#non-habitat
+AMpredictNoSnow_NLCDCnonM<-((NLCDCnon*0)+((underZ*underCOEF)*NLCDCnon)+((canheightZ*canheightCOEF)*NLCDCnon)+((cancover100Z*cancoverCOEF)*NLCDCnon))
+plot(AMpredictNoSnow_NLCDCnonM)
+
+
+
+
+#add up all of the rasters
+AMpredictNoSnow_habC_ALLM<-AMpredictNoSnow_NLCDCotherM+AMpredictNoSnow_NLCDC90M+AMpredictNoSnow_NLCDC42M+AMpredictNoSnow_NLCDC41M+AMpredictNoSnow_NLCDC43M+
+  AMpredictNoSnow_NLCDC52M+ AMpredictNoSnow_NLCDCnonM
+  
+plot(AMpredictNoSnow_habC_ALLM)
+hist(AMpredictNoSnow_habC_ALLM)
+summary(AMpredictNoSnow_habC_ALLM)
+
+NAcheck<-is.na(AMpredictNoSnow_habC_ALL)
+plot(NAcheck)
+NAcheck_NLCD<-NLCDC*NAcheck
+hist(NAcheck_NLCD)
+freq(NAcheck_NLCD)
+
+writeRaster(AMpredictNoSnow_habC_ALLM,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/AmandaRSF/AMpredictNoSnow_habC_ALL_migrators.tif")
 
 
 
@@ -493,9 +642,9 @@ str(fallMooseBB90HR)
 
 
 
-
+AMpredictNoSnow_habC_ALL
 newproj<-projection(summerMooseBB90HR)
-newproj2<-projection(habC)
+newproj2<-projection(AMpredictNoSnow_habC_ALLM)
 
 #Transformations
 plot(habC)
@@ -505,9 +654,47 @@ springMooseBB90HR2 <- spTransform(springMooseBB90HR, crs(newproj2))
 summerMooseBB90HR2 <- spTransform(summerMooseBB90HR, crs(newproj2))
 plot(summerMooseBB90HR2,col="red")
 
+summary(AMpredictNoSnow_habC_ALL)
+plot(AMpredictNoSnow_habC_ALL)
+#Amanda RSF 4/1/2018 - UPDATED VERSION
+# Extract raster values to polygons                             
+( v <- extract(AMpredictNoSnow_habC_ALLM, summerMooseBB90HR) )
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
+# Calculate class percentages for each polygon
+( v.mean <- lapply(v, FUN=mean,na.rm = TRUE) )
+( v.median <- lapply(v, FUN=median,na.rm = TRUE) )
+( v.max <- lapply(v, FUN=max,na.rm = TRUE) )
+( v.sd <- lapply(v, FUN=sd,na.rm = TRUE) )
+( v.n <- lapply(v, FUN=function(x){ length(x) } ) )
+
+class.df.mean <- as.data.frame(t(sapply(v.mean,'[',1:length(unique(summerMooseBB90HR@data$ID))))) 
+class.df.median <- as.data.frame(t(sapply(v.median,'[',1:length(unique(summerMooseBB90HR@data$ID))))) 
+class.df.max <- as.data.frame(t(sapply(v.max,'[',1:length(unique(summerMooseBB90HR@data$ID))))) 
+class.df.sd <- as.data.frame(t(sapply(v.sd,'[',1:length(unique(summerMooseBB90HR@data$ID))))) 
+class.df.n <- as.data.frame(t(sapply(v.n,'[',1:length(unique(summerMooseBB90HR@data$ID))))) 
+#class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(CTIforSTAN60)))))  
+# Replace NA's with 0 and add names
+#class.df[is.na(class.df)] <- 0  
+#class.dfraw[is.na(class.dfraw)] <- 0   
+
+class.df<-cbind(class.df.mean[,1],class.df.median[,1],class.df.max[,1],class.df.sd[,1],class.df.n[,1])
+colnames(class.df) <- c("mean.mig","median.mig","max.mig","sd.nomig","n.mig")
+#names(class.dfraw) <- paste(c("CTIforSTAN50_dryraw","CTIforSTAN50_wetraw"))
+AM_RSF_Mig<-class.df
+AM_RSF_Mig
+#CTIforSTAN50r<-class.dfraw
+# Add back to polygon data
+summerMooseBB90HR@data <- data.frame(summerMooseBB90HR@data, AM_RSF_Mig)
+head(summerMooseBB90HR@data)
+
+summerMooseBB90HR$season<-"summer"
+
+write.csv(summerMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/summer_AM_RSFupdt_Migrators_040218.csv")
 
 
-#Amanda deer habitat layer
+
+#Amanda deer habitat layer  ---OLD VERSION
 # Extract raster values to polygons                             
 ( v <- extract(habC, springMooseBB90HR2) )
 # Get class counts for each polygon
@@ -754,7 +941,6 @@ plot(summerMooseBB90HR,add=TRUE,col="red")
 
 #wet forest
 
-#disturbed layer
 # Extract raster values to polygons                             
 ( v <- extract(CTIforSTAN60, fallMooseBB90HR) )
 # Get class counts for each polygon
@@ -782,6 +968,45 @@ head(fallMooseBB90HR@data)
 fallMooseBB90HR$season<-"fall"
 
 write.csv(fallMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/fall_wetforest50_032818.csv")
+
+########wet areas in general in home range....
+
+
+CTI<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/Soil/CTI_v1")
+
+#standardize it
+CTISTAN<-(CTI-2.058521)/(23.69904-2.058522)
+
+
+# Extract raster values to polygons                             
+( v <- extract(CTISTAN, summerMooseBB90HR) )
+# Calculate class percentages for each polygon
+( v.pct <- lapply(v, FUN=mean ) )
+
+# Create a data.frame where missing classes are NA
+#removed the transpose ("t()")
+class.df <- as.data.frame(t(sapply(v.pct,'[',1:length(unique(summerMooseBB90HR@data$ID))))) 
+#class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(CTIforSTAN60)))))  
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0  
+#class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.df)
+#head(class.dfraw)
+class.df<-class.df[,1]
+names(class.df) <- paste(c("CTISTANWetmeant"))
+#names(class.dfraw) <- paste(c("CTIforSTAN50_dryraw","CTIforSTAN50_wetraw"))
+CTISTANWetmeant<-class.df
+#CTIforSTAN50r<-class.dfraw
+# Add back to polygon data
+summerMooseBB90HR@data <- data.frame(summerMooseBB90HR@data, CTISTANWetmeant)
+head(summerMooseBB90HR@data)
+
+summerMooseBB90HR$season<-"summer"
+
+write.csv(summerMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/summer_wetforest50_allwetmean_033018.csv")
+
+
+
 
 #calculate BB seasonal HR sizes
 
@@ -812,16 +1037,185 @@ write.csv(allarea,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainwor
 MooseInfo<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/MooseInfo.csv")
 
 ###issue of snow out date
-snow<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/TopSecret-2457591210464873654/TopSecret-2457591210464873654.csv")
+snow<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/TS2-7819730596981797434/TS2-7819730596981797434.csv")
 head(snow)
 str(snow)
 snow$timestampL<-strptime(snow$timestamp, "%Y-%m-%d %H:%M:%S",tz="America/Chicago")
 snow$animalID<-snow$individual.local.identifier
 
 summary(snow$MODIS.Snow.Terra.Snow.500m.Daily.NDSI.Snow.Cover)
+summary(snow$MODIS.Snow.Terra.Snow.500m.8d.Maximum.Snow.Extent)
+summary(snow$MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover)
 
-p <- ggplot(snow, aes(x=timestampL,y=MODIS.Snow.Terra.Snow.500m.Daily.NDSI.Snow.Cover,group=as.factor(animalID),colour=as.factor(animalID))) + geom_line(size=2)
+table(snow$animalID,snow$MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover)
+
+p <- ggplot(snow, aes(x=timestampL,y=MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover,group=as.factor(animalID),colour=as.factor(animalID))) + geom_line(size=2)
 p
+
+MB4.dat<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
+head(MB4.dat)
+str(MB4.dat)
+unique(MB4.dat$deathtime)
+
+MB4.dat$timestampL<-strptime(MB4.dat$timestamp, "%Y-%m-%d %H:%M:%S",tz="America/Chicago")
+MB4.dat$animalID<-MB4.dat$individual.local.identifier
+
+head(MB4.dat)
+MB4.dat$deathtime<-paste(MB4.dat$Date.of.death,MB4.dat$time.of.death,sep=" ")
+MB4.dat$deathtime<-strptime(MB4.dat$deathtime, "%m/%d/%Y %H:%M:%S",tz="America/Chicago")
+MB4.dat$year<-as.numeric(format(MB4.dat$timestampL,"%Y"))
+MB4.dat$julian<-as.numeric(format(MB4.dat$timestampL,"%j"))
+MB4.dat$DEATHyear<-as.numeric(format(MB4.dat$deathtime,"%Y"))
+head(MB4.dat)
+MB4.dat$IDyear<-paste(MB4.dat$animalID,MB4.dat$year,sep="_")
+
+head(snow)
+str(snow)
+snow$year<-as.numeric(format(snow$timestampL,"%Y"))
+snow$julian<-as.numeric(format(snow$timestampL,"%j"))
+snow$month<-as.numeric(format(snow$timestampL,"%m"))
+snow$month<-as.numeric(snow$month)
+snow$timestampL<-as.POSIXct(snow$timestampL)
+
+#take death time minus 2 years
+#unique year in each
+#calculate first 0 recording (min 0 recording by Julian), and last 0 recording (maybe cut data from jan to July and get max julian)
+
+samplehold<-NULL
+
+for (i in 1:length(unique(MB4.dat$animalID))){
+  
+  subdat<-subset(MB4.dat,MB4.dat$animalID==unique(MB4.dat$animalID)[i]) 
+  endGPS<-unique(subdat$DEATHyear)
+  startGPS<-unique(subdat$DEATHyear)-1
+  #timediff<-as.numeric(max(subdat$timestampL)-unique(subdat$deathtime))
+  subSNOW<-snow[snow$animalID==unique(subdat$animalID)&snow$year<=endGPS&snow$year>=startGPS,]
+  unique(subSNOW$year)
+  p <- ggplot(subSNOW, aes(x=timestampL,y=MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover)) + geom_line(size=2)+ggtitle(paste(unique(subSNOW$animalID)))
+  print(p)
+  subSNOWZ<-subSNOW[subSNOW$MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover==0,]
+  head(subSNOWZ)
+
+  FirstNoSnow<-subSNOWZ %>%
+    group_by(year) %>%
+    summarize(min.snow.date = min(timestampL, na.rm = TRUE))
+  
+  FirstNoSnow<- as.data.frame(FirstNoSnow)
+  FirstNoSnow$ID<-NA
+  FirstNoSnow$ID<-unique(subSNOWZ$animalID)
+  
+  lastSNOWZ<-subSNOW[subSNOW$month<7&subSNOW$MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover>0,]
+  head(lastSNOWZ)
+  
+  LastSnow<-lastSNOWZ %>%
+    group_by(year) %>%
+    summarize(max.snow.date = max(timestampL, na.rm = TRUE))
+  LastSnow<- as.data.frame(LastSnow)
+  
+  snow.dates<-cbind(FirstNoSnow,LastSnow)
+  
+  samplehold<-rbind(samplehold,snow.dates)
+  print(i)
+}
+
+snowtimes<-samplehold
+
+#an issue is if the moose died during winter - see moose #19 in 2014 as example
+#pull in outside moose data especially date of death
+MooseInfo<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/MooseInfo.csv")
+head(MooseInfo)
+MooseInfo$deathtime<-paste(MooseInfo$Date.of.death,MooseInfo$time.of.death,sep=" ")
+MooseInfo$deathtime<-strptime(MooseInfo$deathtime, "%m/%d/%Y %H:%M:%S",tz="America/Chicago")
+str(MooseInfo)
+str(snowtimes)
+snowtimesM<-merge(MooseInfo,snowtimes,by.x="Moose_ID",by.y="ID",all.x=TRUE)
+
+snowtimes$deathtime<-MooseInfo$deathtime[match(snowtimes$ID,MooseInfo$Moose_ID)]
+
+
+snowtimes$min.death.diff.weeks<-difftime(snowtimes$deathtime,snowtimes$min.snow.date,units="weeks")
+snowtimes$max.death.diff.weeks<-difftime(snowtimes$deathtime,snowtimes$max.snow.date,units="weeks")
+
+#remove observation 31 as min is same as death (within week)
+snowtimes<-snowtimes[-31,]
+#turn max values of less than 5 weeks into "NA"
+snowtimes$max.snow.date[]
+str(snowtimes$max.death.diff.weeks)
+
+snowtimes$max.snow.date[snowtimes$max.death.diff.weeks<=5]<-NA
+snowtimes$max.snow.date.jul<-as.numeric(format(snowtimes$max.snow.date,"%j"))
+snowtimes$min.snow.date.jul<-as.numeric(format(snowtimes$min.snow.date,"%j"))
+
+write.csv(snowtimes,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/snowtimes.csv")
+
+
+p <- ggplot(snow, aes(x=timestampL,y=MODIS.Snow.Terra.Snow.500m.8d.Snow.Cover,group=as.factor(animalID),colour=as.factor(animalID))) + geom_line(size=2)
+print(p)
+
+
+#Distance from centroid to Lake Superior
+#read in a polygon of LS
+LS<-readOGR("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_water_lake_superior_basin",layer="lake_superior_basin",)
+head(str(LS))
+plot(LS)
+
+
+fallcent <- getSpPPolygonsLabptSlots(fallMooseBB90HR)
+springcent <- getSpPPolygonsLabptSlots(springMooseBB90HR)
+summercent <- getSpPPolygonsLabptSlots(summerMooseBB90HR)
+
+plot(fallMooseBB90HR)
+fallcentSP<-SpatialPointsDataFrame(coords=fallcent[,1:2],data=as.data.frame(fallcent),proj4string=CRS("+proj=utm +zone=15 ellps=WGS84"))
+plot(fallcentSP,add=TRUE,col="red")
+
+
+str(fallMooseBB90HR)
+fallcent <- getSpPPolygonsLabptSlots(fallMooseBB90HR)
+springcent <- getSpPPolygonsLabptSlots(springMooseBB90HR)
+summercent <- getSpPPolygonsLabptSlots(summerMooseBB90HR)
+
+plot(fallMooseBB90HR)
+fallcentSP<-SpatialPointsDataFrame(coords=fallcent[,1:2],data=as.data.frame(fallcent),proj4string=CRS("+proj=utm +zone=15 ellps=WGS84"))
+plot(fallcentSP,add=TRUE,col="red")
+
+fallcent<-cbind(as.data.frame(fallMooseBB90HR@data$ID),fallcent)
+springcent<-cbind(as.data.frame(springMooseBB90HR@data$ID),springcent)
+summercent<-cbind(as.data.frame(summerMooseBB90HR@data$ID),summercent)
+
+colnames(fallcent)<-c("ID","X","Y")
+colnames(springcent)<-c("ID","X","Y")
+colnames(summercent)<-c("ID","X","Y")
+
+
+allcent<-rbind(fallcent,springcent,summercent)
+
+allcentSP<-SpatialPointsDataFrame(coords=allcent[,2:3],data=as.data.frame(allcent),proj4string=CRS("+proj=utm +zone=15 ellps=WGS84"))
+plot(allcentSP,add=TRUE,col="blue")
+#distances to lake superior
+
+allcentSP
+LS
+
+newproj_LS<-projection(LS)
+#Transformations
+plot(habC)
+#habC<- projectRaster(habC, crs=newproj)
+allcentSP2 <- spTransform(allcentSP, crs(newproj_LS))
+distLS<-as.vector(apply(gDistance(allcentSP2, LS,byid=TRUE),2,min))
+str(distLS)
+allcentSP2DF<-as.data.frame(allcentSP2)
+allcentSP2DF<-cbind(allcentSP2DF,distLS)
+
+write.csv(allcentSP2DF,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/centroid_dist_LakeSuperior_040218.csv")
+
+
+
+
+
+
+
+
+
 
 
 # FITTING A GENERALISED FUNCTIONAL RESPONSE MODEL (see Matthiopoulos et al. 2011)

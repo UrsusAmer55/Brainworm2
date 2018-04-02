@@ -300,6 +300,8 @@ MB4.dat<-MB4.dat[!duplicated(MB4.dat$event.id),]
 
 
 write.csv(MB4.dat,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
+MB4.dat<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
+head(MB4.dat)
 test<-move("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
 
 
