@@ -644,7 +644,7 @@ str(fallMooseBB90HR)
 
 AMpredictNoSnow_habC_ALL
 newproj<-projection(summerMooseBB90HR)
-newproj2<-projection(AMpredictNoSnow_habC_ALLM)
+newproj2<-projection(RecentCutF)
 
 #Transformations
 plot(habC)
@@ -921,6 +921,169 @@ summerMooseBB90HR$CutArea<-summerMooseBB90HR$RecentCut2009_2018_raw*(30*30)
 summerMooseBB90HR$season<-"summer"
 
 write.csv(summerMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/summer_Disturb2009_2018_032818.csv")
+
+#Recent cuts/disturbance of state and national lands - Updated BY YEAR
+RecentCutF<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_biota_dnr_forest_stand_inventory/fedcut0918_v2")
+RecentCutS<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/shp_biota_dnr_forest_stand_inventory/stcut0918_v2")
+names(MB4.dat.move)
+head(MB4.dat.move)
+
+MB4.dat.moveDF<-as.data.frame(MB4.dat.move)
+MooseL<-SpatialPointsDataFrame(coords=MB4.dat.moveDF[c("utm.easting","utm.northing")],data=MB4.dat.moveDF,proj4string=CRS("+proj=utm +zone=15 ellps=WGS84"))
+MooseL$FedCutValue<-extract(RecentCutF,MooseL)
+hist(MooseL$FedCutValue)
+table(test)
+
+#2012
+FCut2012<-FCut2012==1
+SCut2012<-RecentCutS==2012
+SCut2012 <- projectRaster(SCut2012,FCut2012,method = 'ngb')
+BCut2012<-merge(FCut2012,SCut2012)
+BCut2012 <- reclassify(BCut2012, cbind(0,NA)) 
+plot(BCut2012,col="black")
+
+#2016
+FCut2016<-RecentCutF==3
+SCut2016<-RecentCutS==2016
+SCut2016 <- projectRaster(SCut2016,FCut2016,method = 'ngb')
+BCut2016<-merge(FCut2016,SCut2016)
+BCut2016 <- reclassify(BCut2016, cbind(0,NA)) 
+plot(BCut2016,col="black")
+#2014
+FCut2014<-RecentCutF==4
+SCut2014<-RecentCutS==2014
+SCut2014 <- projectRaster(SCut2014,FCut2014,method = 'ngb')
+BCut2014<-merge(FCut2014,SCut2014)
+BCut2014 <- reclassify(BCut2014, cbind(0,NA)) 
+plot(BCut2014,col="black")
+#2015
+FCut2015<-RecentCutF==5
+SCut2015<-RecentCutS==2015
+SCut2015 <- projectRaster(SCut2015,FCut2015,method = 'ngb')
+BCut2015<-merge(FCut2015,SCut2015)
+BCut2015 <- reclassify(BCut2015, cbind(0,NA)) 
+plot(BCut2015,col="black")
+#2011
+FCut2011<-RecentCutF==6
+SCut2011<-RecentCutS==2011
+SCut2011 <- projectRaster(SCut2011,FCut2011,method = 'ngb')
+BCut2011<-merge(FCut2011,SCut2011)
+BCut2011 <- reclassify(BCut2011, cbind(0,NA)) 
+plot(BCut2011,col="black")
+
+#2010
+FCut2010<-RecentCutF==7
+SCut2010<-RecentCutS==2010
+SCut2010 <- projectRaster(SCut2010,FCut2010,method = 'ngb')
+BCut2010<-merge(FCut2010,SCut2010)
+BCut2010 <- reclassify(BCut2010, cbind(0,NA)) 
+plot(BCut2010,col="black")
+
+#2013
+FCut2013<-RecentCutF==8
+SCut2013<-RecentCutS==2013
+SCut2013 <- projectRaster(SCut2013,FCut2013,method = 'ngb')
+BCut2013<-merge(FCut2013,SCut2013)
+BCut2013 <- reclassify(BCut2013, cbind(0,NA)) 
+plot(BCut2013,col="black")
+
+#disturbed layer
+# Extract raster values to polygons                             
+( v2010 <- extract(BCut2010, springMooseBB90HR) )
+# Get class counts for each polygon
+v2010.counts <- lapply(v2010,table)
+# Calculate class percentages for each polygon
+#( v.pct <- lapply(v.counts, FUN=function(x){ x / sum(x) } ) )
+( v2010.raw <- lapply(v2010.counts, FUN=function(x){ x } ) )
+# Create a data.frame where missing classes are NA
+class.dfraw.2010 <- as.data.frame(t(sapply(v2010.raw,'[',1:length(unique(FCut2010)))))
+# Replace NA's with 0 and add names
+class.dfraw.2010[is.na(class.dfraw.2010)] <- 0  
+class.dfraw.2010$V2<-NULL
+names(class.dfraw.2010) <- paste(c("RecentCut2010"))
+# Add back to polygon data
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2010)
+head(springMooseBB90HR@data)
+#get cut area by multiplying count of raw cells by cell size
+springMooseBB90HR$CutArea2010<-springMooseBB90HR$RecentCut2010*(30*30)
+
+#disturbed layer 2011
+( v2011 <- extract(BCut2011, springMooseBB90HR) )
+v2011.counts <- lapply(v2011,table)
+( v2011.raw <- lapply(v2011.counts, FUN=function(x){ x } ) )
+class.dfraw.2011 <- as.data.frame(t(sapply(v2011.raw,'[',1:length(unique(FCut2011)))))
+class.dfraw.2011[is.na(class.dfraw.2011)] <- 0  
+class.dfraw.2011$V2<-NULL
+names(class.dfraw.2011) <- paste(c("RecentCut2011"))
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2011)
+head(springMooseBB90HR@data)
+springMooseBB90HR$CutArea2011<-springMooseBB90HR$RecentCut2011*(30*30)
+
+
+#disturbed layer 2012
+( v2012 <- extract(BCut2012, springMooseBB90HR) )
+v2012.counts <- lapply(v2012,table)
+( v2012.raw <- lapply(v2012.counts, FUN=function(x){ x } ) )
+class.dfraw.2012 <- as.data.frame(t(sapply(v2012.raw,'[',1:length(unique(FCut2012)))))
+class.dfraw.2012[is.na(class.dfraw.2012)] <- 0  
+class.dfraw.2012$V2<-NULL
+names(class.dfraw.2012) <- paste(c("RecentCut2012"))
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2012)
+head(springMooseBB90HR@data)
+springMooseBB90HR$CutArea2012<-springMooseBB90HR$RecentCut2012*(30*30)
+
+
+#disturbed layer 2013
+( v2013 <- extract(BCut2013, springMooseBB90HR) )
+v2013.counts <- lapply(v2013,table)
+( v2013.raw <- lapply(v2013.counts, FUN=function(x){ x } ) )
+class.dfraw.2013 <- as.data.frame(t(sapply(v2013.raw,'[',1:length(unique(FCut2013)))))
+class.dfraw.2013[is.na(class.dfraw.2013)] <- 0  
+class.dfraw.2013$V2<-NULL
+names(class.dfraw.2013) <- paste(c("RecentCut2013"))
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2013)
+springMooseBB90HR$CutArea2013<-springMooseBB90HR$RecentCut2013*(30*30)
+head(springMooseBB90HR@data)
+#disturbed layer 2014
+( v2014 <- extract(BCut2014, springMooseBB90HR) )
+v2014.counts <- lapply(v2014,table)
+( v2014.raw <- lapply(v2014.counts, FUN=function(x){ x } ) )
+class.dfraw.2014 <- as.data.frame(t(sapply(v2014.raw,'[',1:length(unique(FCut2014)))))
+class.dfraw.2014[is.na(class.dfraw.2014)] <- 0  
+class.dfraw.2014$V2<-NULL
+names(class.dfraw.2014) <- paste(c("RecentCut2014"))
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2014)
+springMooseBB90HR$CutArea2014<-springMooseBB90HR$RecentCut2014*(30*30)
+head(springMooseBB90HR@data)
+
+#disturbed layer 2015
+( v2015 <- extract(BCut2015, springMooseBB90HR) )
+v2015.counts <- lapply(v2015,table)
+( v2015.raw <- lapply(v2015.counts, FUN=function(x){ x } ) )
+class.dfraw.2015 <- as.data.frame(t(sapply(v2015.raw,'[',1:length(unique(FCut2015)))))
+class.dfraw.2015[is.na(class.dfraw.2015)] <- 0  
+class.dfraw.2015$V2<-NULL
+names(class.dfraw.2015) <- paste(c("RecentCut2015"))
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2015)
+springMooseBB90HR$CutArea2015<-springMooseBB90HR$RecentCut2015*(30*30)
+head(springMooseBB90HR@data)
+
+#disturbed layer 2016
+( v2016 <- extract(BCut2016, springMooseBB90HR) )
+v2016.counts <- lapply(v2016,table)
+( v2016.raw <- lapply(v2016.counts, FUN=function(x){ x } ) )
+class.dfraw.2016 <- as.data.frame(t(sapply(v2016.raw,'[',1:length(unique(FCut2016)))))
+class.dfraw.2016[is.na(class.dfraw.2016)] <- 0  
+class.dfraw.2016$V2<-NULL
+names(class.dfraw.2016) <- paste(c("RecentCut2016"))
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, class.dfraw.2016)
+springMooseBB90HR$CutArea2016<-springMooseBB90HR$RecentCut2016*(30*30)
+head(springMooseBB90HR@data)
+
+springMooseBB90HR@data$season<-"spring"
+write.csv(springMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/spring_Disturb2010_2018_040418.csv")
+
+
 
 ########wet forests
 FrstHab<-AllHabC>=105&AllHabC<=108

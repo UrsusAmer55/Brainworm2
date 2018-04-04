@@ -297,7 +297,9 @@ dups2<-MB4.dat[MB4.dat$timestamp=="2013-01-30 00:46:08.000",]
 summary(MB4.dat$event.id)
 MB4.dat<-MB4.dat[!duplicated(MB4.dat$event.id),]
 
-
+head(MB4.dat)
+#good working version of all of moose the GPS locs
+saveRDS(MB4.dat,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/MB4.dat.R")
 
 write.csv(MB4.dat,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
 MB4.dat<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
