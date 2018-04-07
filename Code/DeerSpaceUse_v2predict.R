@@ -1089,18 +1089,59 @@ write.csv(springMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWor
 FrstHab<-AllHabC>=105&AllHabC<=108
 plot(FrstHab)
 
+RegenHab<-AllHabC==108
+plot(RegenHab)
+
 CTI<-raster("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/GIS_files/Soil/CTI_v1")
 
-ext<-extent(FrstHab)
+ext<-extent(RegenHab)
 CTI2<-setExtent(CTI, ext)
-CTI2 <- resample(CTI2, FrstHab)
-CTIfor<-CTI2*FrstHab
-plot(CTIfor)
-CTIforSTAN<-CTIfor/22.2058
-plot(CTIforSTAN)
-CTIforSTAN60<-CTIforSTAN>=.5
-plot(CTIforSTAN60)
+CTI2 <- resample(CTI2, RegenHab)
+CTIreg<-CTI2*RegenHab
+plot(CTIreg)
+CTIregSTAN<-CTIfor/20.40229
+CTIregSTAN.1<-CTIregSTAN
+CTIregSTAN.1[CTIregSTAN.1 < 0.000001] <- NA
+
+plot(CTIregSTAN.1)
 plot(summerMooseBB90HR,add=TRUE,col="red")
+
+#wet regen forest
+
+# Extract raster values to polygons                             
+( v <- extract(CTIregSTAN.1, springMooseBB90HR) )
+# Get class counts for each polygon
+v.counts <- lapply(v,table)
+# Calculate class percentages for each polygon
+( v.sum <- lapply(v, FUN=function(x){ mean(x,na.rm=TRUE) }) )
+( v.raw <- lapply(v.counts, FUN=function(x){ sum(x) } ) )
+# Create a data.frame where missing classes are NA
+#removed the transpose ("t()")
+class.df <- as.data.frame(t(sapply(v.sum,'[',1:length(unique(springMooseBB90HR@polygons))))) 
+class.dfraw <- as.data.frame(t(sapply(v.raw,'[',1:length(unique(springMooseBB90HR@polygons)))))  
+# Replace NA's with 0 and add names
+class.df[is.na(class.df)] <- 0  
+class.dfraw[is.na(class.dfraw)] <- 0   
+head(class.df)
+head(class.dfraw)
+class.df<-class.df[,1]
+class.dfraw<-class.dfraw[,1]
+class.df<-as.data.frame(class.df)
+class.dfraw<-as.data.frame(class.dfraw)
+names(class.df) <- paste(c("RegenWetCTIMean"))
+names(class.dfraw) <- paste(c("RegenWetCTITotalCount"))
+CTIfregSTAN50<-class.df
+CTIfregSTAN50r<-class.dfraw
+CTIfregSTAN50r$RegenWetCTITotalArea<- CTIfregSTAN50r$RegenWetCTITotalCount *(15*15)
+# Add back to polygon data
+springMooseBB90HR@data <- data.frame(springMooseBB90HR@data, CTIfregSTAN50,CTIfregSTAN50r)
+head(springMooseBB90HR@data)
+
+springMooseBB90HR$season<-"spring"
+
+write.csv(springMooseBB90HR,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Brainworm2/ProcessedData/spring_wetREGENforest50_040618.csv")
+
+
 
 #wet forest
 

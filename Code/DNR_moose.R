@@ -300,6 +300,8 @@ MB4.dat<-MB4.dat[!duplicated(MB4.dat$event.id),]
 head(MB4.dat)
 #good working version of all of moose the GPS locs
 saveRDS(MB4.dat,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/MB4.dat.R")
+MB4.dat<-readRDS("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/MB4.dat.R")
+length(unique(MB4.dat$animalID))
 
 write.csv(MB4.dat,"C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")
 MB4.dat<-read.csv("C:/Users/M.Ditmer/Documents/Research/Moose/BrainWorm/Moose_Movebank_Alter_110817.csv")

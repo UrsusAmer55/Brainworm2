@@ -92,6 +92,23 @@ head(D1)
 D1$season<-NULL
 D1$X.y<-NULL
 
+#regenwetmetric
+FALLwetREGarea<-read.csv("fall_wetREGENforest50_040618.csv")
+head(FALLwetREGarea)
+SPRwetREGarea<-read.csv("spring_wetREGENforest50_040618.csv")
+SUMwetREGarea<-read.csv("summer_wetREGENforest50_040618.csv")
+
+
+ALLwetREGarea<-rbind(FALLwetREGarea,SPRwetREGarea,SUMwetREGarea)
+str(ALLwetREGarea)
+str(D1)
+D1<-merge(D1,ALLwetREGarea,by="ID",all.X=TRUE)
+head(D1)
+D1$season<-NULL
+D1$X.y<-NULL
+
+hist(D1$RegenWetCTITotalArea)
+
 #RSF AM update Non-Migrators
 RSFnonmig_fall<-read.csv("fall_AM_RSFupdt_NonMig_040218.csv")
 head(RSFnonmig_fall)
@@ -145,7 +162,7 @@ snow$IDyear<-paste(snow$ID,snow$year,sep="_")
 D1$max.snow.date.jul<-snow$max.snow.date.jul[match(D1$IDyear,snow$IDyear)]
 D1$min.snow.date.jul<-snow$min.snow.date.jul[match(D1$IDyear,snow$IDyear)]
 
-
+D1$X.x<-NULL
 require(dplyr)
 D1roll<-D1%>%
   group_by(IDseas)%>%
@@ -156,11 +173,12 @@ D1roll<-D1%>%
             CTIforSTAN50_wetpercentW=weighted.mean(CTIforSTAN50_wetpercent,area_km2),CTISTANWetmeantW=weighted.mean(CTISTANWetmeant,area_km2),
             mean.nomigW=weighted.mean(mean.nomig,area_km2),median.nomigW=weighted.mean(median.nomig,area_km2),max.nomigW=weighted.mean(max.nomig,area_km2),sd.nomigW=weighted.mean(sd.nomig.x,area_km2),mean.migW=weighted.mean(mean.mig,area_km2),median.migW=weighted.mean(median.mig,area_km2),max.migW=weighted.mean(max.mig,area_km2),sd.migW=weighted.mean(sd.nomig.y,area_km2),
             CutArea2010W=sum(CutArea2010/(area_km2*1000000)),CutArea2011W=sum(CutArea2011/(area_km2*1000000)),CutArea2012W=sum(CutArea2012/(area_km2*1000000)),CutArea2013W=sum(CutArea2013/(area_km2*1000000)),CutArea2014W=sum(CutArea2014/(area_km2*1000000)),CutArea2015W=sum(CutArea2015/(area_km2*1000000)),CutArea2016W=sum(CutArea2016/(area_km2*1000000)),
-            max.snow.date.jul=mean(max.snow.date.jul),min.snow.date.jul=mean(min.snow.date.jul)
+            max.snow.date.jul=mean(max.snow.date.jul),min.snow.date.jul=mean(min.snow.date.jul),RegenWetCTI=weighted.mean(RegenWetCTITotalArea*RegenWetCTIMean/(area_km2*1000000),area_km2)
             )
 
 D2<-as.data.frame(D1roll)
 
+D2$RegenWetCTI100<-D2$RegenWetCTI*100
 test<-unlist(strsplit(as.character(D2$IDseas), "[_]")) 
 D2$MooseID <- test[seq(1, length(test), 2)]
 D2$Season <- test[seq(2, length(test), 2)]
@@ -242,15 +260,32 @@ names(D2)
 head(D2)
 D2$DeerHabLidWt.fallTOT<-rowSums(D2[,52:60],na.rm=TRUE)
 D2$DeerHabLidWt.springTOT<-rowSums(D2[,62:70],na.rm=TRUE)
-D2$DeerHabLidWt.summerTOT<-rowSums(D2[,62:80],na.rm=TRUE)
+D2$DeerHabLidWt.summerTOT<-rowSums(D2[,72:80],na.rm=TRUE)
 
 D2$DeerHabLidWt.TOTAL<-rowSums(D2[,81:83],na.rm=TRUE)
 
 hist(D2$DeerHabLidWt.TOTAL)
 
-saveRDS(D2,"D2_040418.R")
-write.csv(D2,"D2_040418.csv")
+saveRDS(D2,"D2_040618.R")
+write.csv(D2,"D2_040618.csv")
 saveRDS(D1,"D1_040418.R")
 write.csv(D1,"D1_040418.csv")
 
+head(D2)
+D2$death.age<-as.numeric(D2$death.age)
 
+D2$PTN<-NA
+D2$PTN[D2$PT=="Yes"]<-1
+D2$PTN[D2$PT=="No"]<-0
+table(D2$PTN)
+D2$PTNF<-factor(D2$PTN)
+
+
+Dann<-D2 %>% group_by(MooseID) %>% summarise_all(funs(mean))
+
+Dann<-as.data.frame(Dann)
+unique(Dann$death.age)
+unique(Dann$PTN)
+
+saveRDS(Dann,"Dann_040618.R")
+write.csv(Dann,"Dann_040618.csv")
